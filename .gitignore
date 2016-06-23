@@ -1,3 +1,12 @@
+# IDE settings
 .idea
+
+# Installed packages
 node_modules
+typings
+
+# Compiled code
 dist
+
+# Instance config
+src/config.ts

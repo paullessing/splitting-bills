@@ -1,4 +1,8 @@
 {
   "name": "splitting-bills",
-  "dependencies": {}
+  "dependencies": {},
+  "globalDependencies": {
+    "mysql": "registry:dt/mysql#0.0.0+20160316155526",
+    "node": "registry:env/node#6.0.0+20160622202520"
+  }
 }
