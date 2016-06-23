@@ -15,5 +15,6 @@
   "bugs": {
     "url": "https://github.com/paullessing/splitting-bills/issues"
   },
-  "homepage": "https://github.com/paullessing/splitting-bills#readme"
+  "homepage": "https://github.com/paullessing/splitting-bills#readme",
+  "dependencies": {}
 }
