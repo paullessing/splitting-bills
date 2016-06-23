@@ -1,0 +1,19 @@
+{
+  "name": "splitting-bills",
+  "version": "0.0.1",
+  "description": "Splitting Bills",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/paullessing/splitting-bills.git"
+  },
+  "author": "paul@paullessing.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/paullessing/splitting-bills/issues"
+  },
+  "homepage": "https://github.com/paullessing/splitting-bills#readme"
+}
