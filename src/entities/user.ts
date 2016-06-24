@@ -1,5 +1,6 @@
 export type UserId = number;
 
-interface User {
+export interface User {
   id: UserId;
+  name: string;
 }

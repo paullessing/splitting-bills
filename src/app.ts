@@ -1,15 +1,13 @@
+import {billsRepository} from "./services/bills.repository";
 import {database} from "./services/database.service";
+import {User} from "./entities"
 
-database.query('SELECT * FROM users')
-  .then(result => console.log('query', result))
-  .catch(err => console.log('error', err));
-database.queryOne('SELECT * FROM users WHERE id = 1')
-  .then(result => console.log('query', result))
-  .catch(err => console.log('error', err));
-database.queryOne('SELECT * FROM users')
-  .then(result => console.log('query', result))
-  .catch(err => console.log('error', err));
-database.queryOne('SELECT * FROM users WHERE id = 3')
-  .then(result => console.log('query', result))
-  .catch(err => console.log('error', err));
-database.close();
+database.insert<User>('users', ['id', 'name'], {
+  id: 3,
+  name: 'Custom user'
+}, {
+  id: 5,
+  name: 'User 5'
+})
+  .catch(err => console.log('Error', err))
+  .then(() => database.close());
