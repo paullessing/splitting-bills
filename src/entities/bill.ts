@@ -36,8 +36,11 @@ export class Bill implements IBill {
 }
 
 export class BillAmount {
-  public billId: BillId;
-  public userId: UserId;
-  public amount: number;
-  public amountRemaining: number;
+  constructor(
+    public id: number,
+    public billId: BillId,
+    public userId: UserId,
+    public amount: number,
+    public amountRemaining: number
+  ){}
 }
