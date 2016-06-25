@@ -1,14 +1,11 @@
-import {Bill, UserId} from "../entities";
-import {database, NoResultsFoundException} from "./database.service";
-import {IBill, BillAmount} from "../entities/bill";
+import {Bill, IBill, BillAmount, UserId} from "../entities";
+import {database} from "./database.service";
 
-const ERROR_NO_SUCH_TABLE = 'ER_NO_SUCH_TABLE';
-const ERROR_PARSE = 'ER_PARSE_ERROR';
+const BILLS_TABLE_NAME = 'bill';
+const AMOUNTS_TABLE_NAME = 'bill_amount';
 
-const BILLS_TABLE_NAME = 'bills';
-const AMOUNTS_TABLE_NAME = 'bill_amounts';
+export class BillRepository {
 
-export class BillsRepository {
   public setup(): Promise<void> {
     return Promise.resolve()
       .then(() => database.doesTableExist(BILLS_TABLE_NAME))
@@ -45,7 +42,7 @@ CREATE TABLE ${AMOUNTS_TABLE_NAME} (
       });
   }
 
-  public getBillsForPayer(userId: UserId): Promise<Bill[]> {
+  public findByPayerId(userId: UserId): Promise<Bill[]> {
     let query = `
 SELECT
   b.id,
@@ -60,46 +57,46 @@ SELECT
   ba.amount AS splitAmount,
   ba.amountRemaining
 FROM
-  bills b
-JOIN bill_amounts ba
+  ${BILLS_TABLE_NAME} b
+JOIN ${AMOUNTS_TABLE_NAME} ba
 ON (b.id = ba.billId)
 WHERE b.payerId = ?
 ORDER BY b.id ASC
 `;
-    let bills: {[id: number]: [IBill, BillAmount[]] } = {};
-    return database.query<void>(query, userId, (row: any) => {
-      let amount = new BillAmount(
-        row.amountId,
-        row.billId,
-        row.userId,
-        row.splitAmount,
-        row.amountRemaining
-      );
-      let bill = bills[row.id];
-      if (!bill) {
-        bills[row.id] = bill = [
-          {
-            id: row.id,
-            amount: row.amount,
-            amountOutstanding: row.amountOutstanding,
-            payerId: row.payerId,
-            dateCreated: row.dateCreated,
-            description: row.description
-          },
-          []
-        ];
-      }
-      bill[1].push(amount);
-      return null;
-    })
-      .then(() => {
+    return database.query<any>(query, userId)
+      .then((rows: any[]) => {
+        let bills: {[id: number]: [IBill, BillAmount[]] } = {};
+        rows.forEach((row: any) => {
+          let amount = new BillAmount(
+            row.amountId,
+            row.billId,
+            row.userId,
+            row.splitAmount,
+            row.amountRemaining
+          );
+          let bill = bills[row.id];
+          if (!bill) {
+            bills[row.id] = bill = [
+              {
+                id: row.id,
+                amount: row.amount,
+                amountOutstanding: row.amountOutstanding,
+                payerId: row.payerId,
+                dateCreated: row.dateCreated,
+                description: row.description
+              },
+              []
+            ];
+          }
+          bill[1].push(amount);
+        });
         return Object.keys(bills).map(key => {
           let data: [IBill, BillAmount[]] = bills[key];
           let bill = new Bill(data[0], data[1]);
           return bill;
-        })
+        });
       });
   }
 }
 
-export const billsRepository = new BillsRepository();
+export const billRepository = new BillRepository();

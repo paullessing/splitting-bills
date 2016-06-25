@@ -1,13 +1,20 @@
-import {billsRepository} from "./services/bills.repository";
+import {userRepository} from "./services/user.repository";
 import {database} from "./services/database.service";
-import {User} from "./entities"
+import {User} from "./entities/user";
 
-database.insert<User>('users', ['id', 'name'], {
-  id: 3,
-  name: 'Custom user'
-}, {
-  id: 5,
-  name: 'User 5'
-})
-  .catch(err => console.log('Error', err))
-  .then(() => database.close());
+const errorHandler = (err: any) => console.log('Error in MAIN:', err);
+const finallyClose = () => database.close();
+
+database.enableDebug();
+
+Promise.resolve()
+  .then(() => userRepository.setup())
+  .then(() => userRepository.create(new User('Paul Lessing ' + Math.floor(Math.random() * 1000))))
+  .then(user => console.log('User', user))
+  .then(() => userRepository.getAll()
+    .then(users => {
+      console.log(users);
+    })
+  )
+  .catch(errorHandler)
+  .then(finallyClose);

@@ -27,8 +27,19 @@ export class SqlException {
   }
 }
 
+const debugFunction = (query: string, args: any[]) => {
+  console.log('Executing SQL:');
+  console.log(query);
+  if (args && args.length) {
+    console.log('Arguments: ', args)
+  }
+};
+
+const returnNothing: () => void = () => {};
+
 export class Database {
   private connection: IConnection;
+  private debug: (query: string, args: any[]) => void;
 
   public init(): void {
     this.connection = createConnection({
@@ -37,21 +48,27 @@ export class Database {
       password : DATABASE.password,
       database : DATABASE.database
     });
+    this.enableDebug(false);
+  }
+
+  public enableDebug(enable: boolean = true) {
+    if (enable) {
+      this.debug = debugFunction;
+    } else {
+      this.debug = () => {};
+    }
   }
 
   public execute(query: string, ...args: any[]): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      this.connection.query(query, args, (err: any) => {
-        if (err) {
-          reject(new SqlException(err));
-        } else {
-          resolve();
-        }
-      });
-    });
+    return this.doQuery<void>(query, args)
+      .then(returnNothing);
   }
 
-  public insert<T>(tableName: string, columns: string[], ...values: T[]): Promise<void> {
+  /**
+   * Insert into the given table.
+   * @returns {Promise<number>} Promise which resolves with the ID of the inserted row.
+     */
+  public insert<T>(tableName: string, columns: string[], ...values: T[]): Promise<number> {
     let query: string = `INSERT INTO ${tableName} (`;
     query += columns.join(', ');
     query += ') VALUES ';
@@ -61,43 +78,27 @@ export class Database {
       .map(value => `(${value})`)
       .join(', ');
 
-    return this.execute(query);
+    return this.doQuery(query)
+      .then((result: any) => (result as { insertId: number }).insertId);
   }
 
   public query<T>(query: string, ...args: any[]): Promise<T[]> {
-    return new Promise<T[]>((resolve, reject) => {
-      this.connection.query(query, args, (err: any, rows: T[]) => {
-        if (err) {
-          reject(new SqlException(err));
-          return;
-        }
-
-        resolve(rows);
-      });
-    });
+    return this.doQuery(query, args);
   }
 
   public queryOne<T>(query: string, ...args: any[]): Promise<T> {
-    return new Promise<T>((resolve, reject) => {
-      this.connection.query(query, args, (err: any, rows: any[]) => {
-        if (err) {
-          reject(new SqlException(err));
-          return;
-        }
-
+    return this.doQuery<T>(query, args)
+      .then((rows: T[]) => {
         if (rows.length === 0) {
-          reject(new NoResultsFoundException());
-          return;
+          throw new NoResultsFoundException();
         }
 
         if (rows.length > 1) {
-          reject(new TooManyResultsFoundException(rows.length));
-          return;
+          throw new TooManyResultsFoundException(rows.length);
         }
 
-        resolve(rows[0]);
+        return rows[0];
       });
-    });
   }
 
   public doesTableExist(tableName: string): Promise<boolean> {
@@ -118,6 +119,20 @@ export class Database {
 
   public close(): void {
     this.connection.end();
+  }
+
+  private doQuery<T>(query: string, args?: any[]): Promise<T[]> {
+    return new Promise<T[]>((resolve, reject) => {
+      this.debug(query, args);
+      this.connection.query(query, args, (err: any, rows: T[]) => {
+        if (err) {
+          reject(new SqlException(err));
+          return;
+        }
+
+        resolve(rows);
+      });
+    });
   }
 }
 
