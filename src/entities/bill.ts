@@ -52,38 +52,3 @@ export class Bill implements IBill {
     return bill;
   }
 }
-
-/*
-export interface IBillAmount {
-  id?: number;
-  billId: BillId;
-  userId: UserId;
-  isCredit: boolean;
-  amount: number;
-  amountOutstanding: number;
-}
-
-export class BillAmount implements IBillAmount {
-  public id: number;
-
-  constructor(
-    public billId: BillId,
-    public userId: UserId,
-    public amount: number,
-    public amountOutstanding: number,
-    public isCredit: boolean = false
-  ){}
-
-  public static fromData(data: IBillAmount): BillAmount {
-    let amount = new BillAmount(
-      data.billId,
-      data.userId,
-      data.amount,
-      data.amountOutstanding,
-      data.isCredit
-    );
-    amount.id = data.id;
-    return amount;
-  }
-}
-*/

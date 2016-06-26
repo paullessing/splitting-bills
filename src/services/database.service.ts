@@ -28,10 +28,9 @@ export class SqlException {
 }
 
 const debugFunction = (query: string, args: any[]) => {
-  console.log('Executing SQL:');
-  console.log(query);
+  console.log('SQL: ', query);
   if (args && args.length) {
-    console.log('Arguments: ', args)
+    console.log('Args:', args);
   }
 };
 
@@ -113,11 +112,20 @@ export class Database {
       });
   }
 
+  public ensureTableExists(tableName: string, tableDefinition: string): Promise<void> {
+    return this.doesTableExist(tableName)
+      .then((exists: boolean) => {
+        if (!exists) {
+          return this.execute(tableDefinition);
+        }
+      });
+  }
+
   public dropTable(tableName: string): Promise<void> {
     return this.execute('DROP TABLE IF EXISTS ?', tableName);
   }
 
-  public inTransaction<T>(actions: () => Promise<T>): Promise<T> {
+  public runInTransaction<T>(actions: () => Promise<T>): Promise<T> {
     return new Promise<T>((resolve, reject) => {
       this.connection.beginTransaction(err => {
         if (err) {

@@ -1,19 +1,22 @@
 import {DebtId, BillId, UserId} from "./ids";
 
 export const DEBTS_TABLE_NAME = 'debt';
+export const DEBTS_TABLE_COLUMNS = ['billId', 'debtorId', 'creditorId', 'amount', 'createdAt', 'paidAt'];
 export const DEBTS_TABLE_DEFINITION = `
 CREATE TABLE ${DEBTS_TABLE_NAME} (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   billId INT NOT NULL,
   debtorId INT NOT NULL,
   creditorId INT NOT NULL,
-  amount NUMERIC NOT NULL,
+  amount DECIMAL(10, 2) NOT NULL,
   createdAt TIMESTAMP NOT NULL,
+  paidAt TIMESTAMP NULL,
 
-  UNIQUE KEY (billId, creditorId, debtorId),
-  FOREIGN KEY (billId) REFERENCES bills(id) ON DELETE CASCADE,
-  FOREIGN KEY (debtorId) REFERENCES users(id) ON DELETE RESTRICT,
-  FOREIGN KEY (creditorId) REFERENCES users(id) ON DELETE RESTRICT
+  UNIQUE KEY (billId, creditorId, debtorId)${''
+  // FOREIGN KEY (billId) REFERENCES bills(id) ON DELETE CASCADE,
+  // FOREIGN KEY (debtorId) REFERENCES users(id) ON DELETE RESTRICT,
+  // FOREIGN KEY (creditorId) REFERENCES users(id) ON DELETE RESTRICT
+  }
 );`;
 
 export interface IDebt {
@@ -37,7 +40,9 @@ export class Debt implements IDebt {
     public debtorId: UserId,
     public creditorId: UserId,
     public createdAt: Date
-  ) {}
+  ) {
+    this.amount = Math.round(amount * 100) / 100;
+  }
 
   public static fromData(data: IDebt): Debt {
     let debt = new Debt(
