@@ -1,4 +1,4 @@
-export type UserId = number;
+import {UserId} from './ids';
 
 export interface IUser {
   id?: UserId;

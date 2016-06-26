@@ -43,6 +43,10 @@ CREATE TABLE ${AMOUNTS_TABLE_NAME} (
   }
 
   public findByPayerId(userId: UserId): Promise<Bill[]> {
+    return this.findWhere(`b.payerId = ?`, userId);
+  }
+
+  private findWhere(whereClause: string, ...args: any[]): Promise<Bill[]> {
     let query = `
 SELECT
   b.id,
@@ -51,51 +55,50 @@ SELECT
   b.payerId,
   b.dateCreated,
   b.description,
-  ba.id AS amountId,
-  ba.billId,
-  ba.userId,
-  ba.amount AS splitAmount,
-  ba.amountRemaining
+  ba.id AS amount_id,
+  ba.billId AS amount_billId,
+  ba.userId AS amount_userId,
+  ba.amount AS amount_amount,
+  ba.amountOutstanding AS amount_amountOutstanding,
+  ba.isCredit AS amount_isCredit
 FROM
   ${BILLS_TABLE_NAME} b
 JOIN ${AMOUNTS_TABLE_NAME} ba
 ON (b.id = ba.billId)
-WHERE b.payerId = ?
+WHERE (${whereClause})
 ORDER BY b.id ASC
 `;
-    return database.query<any>(query, userId)
+    return database.query<any>(query, ...args)
       .then((rows: any[]) => {
         let bills: {[id: number]: [IBill, BillAmount[]] } = {};
         rows.forEach((row: any) => {
-          let amount = new BillAmount(
-            row.amountId,
-            row.billId,
-            row.userId,
-            row.splitAmount,
-            row.amountRemaining
-          );
+          let billAmount = this.getBillAmount(row);
           let bill = bills[row.id];
           if (!bill) {
             bills[row.id] = bill = [
-              {
-                id: row.id,
-                amount: row.amount,
-                amountOutstanding: row.amountOutstanding,
-                payerId: row.payerId,
-                dateCreated: row.dateCreated,
-                description: row.description
-              },
+              row,
               []
             ];
           }
-          bill[1].push(amount);
+          bill[1].push(billAmount);
         });
         return Object.keys(bills).map(key => {
           let data: [IBill, BillAmount[]] = bills[key];
-          let bill = new Bill(data[0], data[1]);
-          return bill;
+          return new Bill(data[0], data[1]);
         });
       });
+  }
+
+  private getBillAmount(row: any): BillAmount {
+    let data = {
+      id: row.amount_id,
+      billId: row.amount_billId,
+      userId: row.amount_userId,
+      amount: row.amount_amount,
+      amountOutstanding: row.amount_amountOutstanding,
+      isCredit: row.amount_isCredit
+    }
+    return BillAmount.fromData(data);
   }
 }
 
