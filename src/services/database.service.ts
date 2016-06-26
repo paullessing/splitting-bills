@@ -117,6 +117,33 @@ export class Database {
     return this.execute('DROP TABLE IF EXISTS ?', tableName);
   }
 
+  public inTransaction<T>(actions: () => Promise<T>): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      this.connection.beginTransaction(err => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    })
+      .then(actions)
+      .then((result: T) => new Promise<T>((resolve, reject) => {
+        this.connection.commit(err => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(result);
+          }
+        });
+      }))
+      .catch(err => new Promise<T>((resolve, reject) => {
+        this.connection.rollback(() => {
+          reject(err);
+        });
+      }));
+  }
+
   public close(): void {
     this.connection.end();
   }

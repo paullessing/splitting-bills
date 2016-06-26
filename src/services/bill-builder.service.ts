@@ -1,31 +1,37 @@
-import {BillId, Bill, BillAmount, UserId} from "../entities";
+import {Bill, UserId} from "../entities";
 import {BillRepository} from "./bill.repository";
+
+interface Payment {
+  userId: UserId;
+  amount: number;
+}
+
 export class BillBuilder {
-  private amount: number;
-  private amountPaidByOwner: number;
-  private payerId: UserId;
-  private dateCreated: Date;
   private description: string;
 
-  private amounts: BillAmount[] = [];
+  private creditors: Payment[] = [];
+  private debtors: Payment[] = [];
 
   private isBuilt: boolean = false;
 
-  constructor(payerId: UserId, amount: number) {
-    if (!payerId) {
-      throw new Error('ID of paying user is required');
-    }
-    if (!amount || amount <= 0) {
-      throw new Error('Non-negative amount required');
-    }
-
-    this.payerId = payerId;
-    this.amount = amount;
+  public setDescription(description: string): BillBuilder {
+    this.description = description;
+    return this;
   }
 
-  public addDebtor(debtorId: UserId, amountOwed: number): BillBuilder {
+  public addCreditor(creditorId: UserId, amount: number): BillBuilder {
+    if (amount <= 0) {
+      throw new Error('Amount must be positive!');
+    }
+    this.creditors.push({ userId: creditorId, amount });
+    return this;
+  }
 
-
+  public addDebtor(debtorId: UserId, amount: number): BillBuilder {
+    if (amount <= 0) {
+      throw new Error('Amount must be positive!');
+    }
+    this.debtors.push({ userId: debtorId, amount });
     return this;
   }
 
@@ -34,6 +40,7 @@ export class BillBuilder {
       throw new Error('Already built this bill');
     }
     this.isBuilt = true;
+
     return null;
   }
 }
